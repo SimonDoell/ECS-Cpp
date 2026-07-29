@@ -115,6 +115,9 @@ struct sparse_set {
             values.clear();
             dense.clear();
         }
+
+        constexpr const auto dense_ptr()  const {return &dense;}
+        constexpr const auto sparse_ptr() const {return &sparse;}
         
     private:
         sparseType sparse;
