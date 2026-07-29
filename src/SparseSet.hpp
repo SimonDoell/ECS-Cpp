@@ -106,6 +106,15 @@ struct sparse_set {
         auto begin() const noexcept {return values.begin();}
         auto end()         noexcept {return values.end();}
         auto end()   const noexcept {return values.end();}
+
+        constexpr bool empty() const noexcept {return dense.empty();}
+        constexpr auto size () const noexcept {return dense.size();}
+
+        constexpr void clear() noexcept {
+            sparse.clear();
+            values.clear();
+            dense.clear();
+        }
         
     private:
         sparseType sparse;
