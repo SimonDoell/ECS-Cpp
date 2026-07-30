@@ -4,14 +4,6 @@
 #include <algorithm>
 #include "SparseSet.hpp"
 
-template<typename T, typename... Types>
-consteval uint32_t index_of() {
-    static_assert((std::is_same_v<T, Types> || ...));
-    static_assert((sizeof...(Types) >= 1));
-    bool matches[sizeof...(Types)] = {std::is_same_v<T, Types>...};
-    for (uint32_t i = 0; i < sizeof...(Types); ++i) if (matches[i]) return i;
-    return -1;
-}
 
 template<typename... SparseSets>
 struct sparse_view {
@@ -51,7 +43,7 @@ struct sparse_view {
 
     public:
         sparse_view(SparseSets&... _sparse_sets)
-        : sparse_sets{&_sparse_sets...} {
+        : sparse_sets{&_sparse_sets...}, smallest_size(-1) {
             (smallest_helper(_sparse_sets), ...);
         }
 
@@ -60,26 +52,22 @@ struct sparse_view {
 
     private:
         std::tuple<SparseSets*...> sparse_sets;
-        std::vector<size_type> const* leading_dense;
-        size_type leading_type_index;
-        size_type smallest_size = -1;
+        std::vector<Entity> const* leading_dense;
+        void const* leading_storage;
+        size_type smallest_size;
 
         template<typename T, uint32_t PageSizePower = 12>
         constexpr void smallest_helper(sparse_set<T, PageSizePower>& set) {
             if (smallest_size == static_cast<size_type>(-1) || smallest_size > set.size()) {
-                leading_type_index = index_of<sparse_set<T, PageSizePower>, SparseSets...>();
                 leading_dense      = set.dense_ptr();
                 smallest_size      = set.size();
+                leading_storage    = &set;
             }
         }
 
         template<typename T, uint32_t PageSizePower = 12>
         constexpr bool contained_helper(sparse_set<T, PageSizePower>& set, Entity entity) const {
-            if (leading_type_index == index_of<sparse_set<T, PageSizePower>, SparseSets...>()) {
-                return true;
-            } else {
-                return set.contains(entity);
-            }
+            return (leading_storage == &set) || (set.contains(entity));
         }
 
         constexpr bool contained_by_all(Entity entity) const {
