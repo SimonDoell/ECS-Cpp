@@ -20,22 +20,36 @@ inline constexpr TypeList<Types...> typeList{};
 
 
 template<typename IncludeList, typename ExcludeList>
-struct sparse_view_impl;
+struct sparse_view;
 
 template<typename... Inc, typename... Exc>
-struct sparse_view_impl<TypeList<Inc...>, TypeList<Exc...>> {
+requires (sizeof...(Inc) >= 1)
+struct sparse_view<TypeList<Inc...>, TypeList<Exc...>> {
+        using size_type = uint32_t;
+        static constexpr size_type include_count = sizeof...(Inc);
+        static constexpr size_type exclude_count = sizeof...(Exc);
+
+        using reference = std::tuple<
+            std::conditional_t<std::is_const_v<Inc>,
+            const typename Inc::value_type,
+                  typename Inc::value_type
+        >...>;
+
+        static_assert((std::is_same_v<std::remove_const_t<Inc>, sparse_set<typename Inc::value_type, Inc::page_size_power>> && ...));
+        static_assert((std::is_same_v<std::remove_const_t<Exc>, sparse_set<typename Exc::value_type, Exc::page_size_power>> && ...));
+
+        struct iterator {};
+        
     public:
-        static constexpr int value = 1;
-        sparse_view_impl() {}
+        sparse_view(const Inc&... _include_sets, const Exc&... _exclude_sets) {}
+
+        
+    private:
+        std::tuple<Inc*..., Exc*...> sparse_sets;
+        std::vector<Entity> const* leading_dense;
+        void const* leading_storage;
+        size_type smallest_size;
 };
-
-
-template<typename... Types>
-struct sparse_view : sparse_view_impl<TypeList<Types...>, TypeList<>> {};
-
-template<typename... Inc, typename... Exc>
-struct sparse_view<TypeList<Inc...>, TypeList<Exc...>> : sparse_view_impl<TypeList<Inc...>, TypeList<Exc...>> {};
-
 
 
 
