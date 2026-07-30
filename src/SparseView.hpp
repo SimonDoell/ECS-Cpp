@@ -8,13 +8,19 @@
 template<typename... SparseSets>
 struct sparse_view {
         using size_type = uint32_t;
-        using reference = std::tuple<typename SparseSets::value_type&...>;
-        using const_reference = std::tuple<const typename SparseSets::value_type&...>;
+        using reference = std::tuple<std::conditional_t<
+            std::is_const_v<SparseSets>, 
+            const typename SparseSets::value_type, 
+            typename SparseSets::value_type
+        >&...>;
 
         static constexpr size_type type_count = sizeof...(SparseSets);
 
         static_assert((type_count >= 2));
-        static_assert((std::is_same_v<SparseSets, sparse_set<typename SparseSets::value_type, SparseSets::page_size_power>> && ...));
+        static_assert((
+            std::is_same_v<std::remove_const_t<SparseSets>,
+            std::remove_const_t<sparse_set<typename SparseSets::value_type, SparseSets::page_size_power>>> && ...)
+        );
 
     public:
         struct iterator {
@@ -58,7 +64,7 @@ struct sparse_view {
                     return dense_index != other.dense_index;
                 }
 
-                constexpr const_reference operator*() const {
+                constexpr reference operator*() const {
                     return view->value_from_dense(dense_index);
                 }
 
@@ -86,7 +92,7 @@ struct sparse_view {
         size_type smallest_size;
 
         template<typename T, uint32_t PageSizePower = 12>
-        constexpr void smallest_helper(sparse_set<T, PageSizePower>& set) {
+        constexpr void smallest_helper(const sparse_set<T, PageSizePower>& set) {
             if (smallest_size == static_cast<size_type>(-1) || smallest_size > set.size()) {
                 leading_dense      = set.dense_ptr();
                 smallest_size      = set.size();
@@ -95,7 +101,7 @@ struct sparse_view {
         }
 
         template<typename T, uint32_t PageSizePower = 12>
-        constexpr bool contained_helper(sparse_set<T, PageSizePower>& set, Entity entity) const {
+        constexpr bool contained_helper(const sparse_set<T, PageSizePower>& set, Entity entity) const {
             return (leading_storage == &set) || (set.contains(entity));
         }
 
@@ -120,7 +126,7 @@ struct sparse_view {
             return {(std::get<SparseSets*>(sparse_sets)->get(entity))...};
         }
 
-        constexpr const_reference value_from_dense(size_type dense_index) const {
+        constexpr reference value_from_dense(size_type dense_index) const {
             assert(dense_index < leading_dense->size());
             Entity entity = (*leading_dense)[dense_index];
             return {(std::get<SparseSets*>(sparse_sets)->get(entity))...};
