@@ -5,20 +5,51 @@
 #include "SparseSet.hpp"
 
 template<typename... Types>
-struct exclude_t {};
+struct Exclude {};
 
 template<typename... Types>
-struct type_list {};
+inline constexpr Exclude<Types...> exclude{};
 
-template<typename... Exclude>
-inline constexpr exclude_t<Exclude...> exclude{};
+
+template<typename... Types>
+struct TypeList {};
+
+template<typename... Types>
+inline constexpr TypeList<Types...> typeList{};
+
 
 
 template<typename IncludeList, typename ExcludeList>
-struct sparse_view {
+struct sparse_view_impl;
+
+template<typename... Inc, typename... Exc>
+struct sparse_view_impl<TypeList<Inc...>, TypeList<Exc...>> {
     public:
-        explicit sparse_view(Exclude<Exc...>) {}
+        static constexpr int value = 1;
+        sparse_view_impl() {}
 };
+
+
+template<typename... Types>
+struct sparse_view : sparse_view_impl<TypeList<Types...>, TypeList<>> {};
+
+template<typename... Inc, typename... Exc>
+struct sparse_view<TypeList<Inc...>, TypeList<Exc...>> : sparse_view_impl<TypeList<Inc...>, TypeList<Exc...>> {};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // template<typename... SparseSets>
