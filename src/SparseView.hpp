@@ -8,7 +8,8 @@
 template<typename... SparseSets>
 struct sparse_view {
         using size_type = uint32_t;
-        using reference = std::tuple<typename SparseSets::value_type...>;
+        using reference = std::tuple<typename SparseSets::value_type&...>;
+        using const_reference = std::tuple<const typename SparseSets::value_type&...>;
 
         static constexpr size_type type_count = sizeof...(SparseSets);
 
@@ -28,7 +29,7 @@ struct sparse_view {
                     return *this;
                 }
 
-                constexpr bool operator !=(const iterator& other) {
+                constexpr bool operator!=(const iterator& other) {
                     return dense_index != other.dense_index;
                 }
 
@@ -41,6 +42,31 @@ struct sparse_view {
                 size_type dense_index;
         };
 
+        struct const_iterator {
+            public:
+                const_iterator(const sparse_view* _view, size_type _dense_index)
+                : view(_view), dense_index(view->find_next(_dense_index)) {
+                    assert(_view != nullptr);
+                }
+
+                constexpr const_iterator& operator++() {
+                    dense_index = view->find_next(dense_index + 1);
+                    return *this;
+                }
+
+                constexpr bool operator!=(const const_iterator& other) {
+                    return dense_index != other.dense_index;
+                }
+
+                constexpr const_reference operator*() const {
+                    return view->value_from_dense(dense_index);
+                }
+
+            private:
+                const sparse_view* view;
+                size_type dense_index;
+        };
+
     public:
         sparse_view(SparseSets&... _sparse_sets)
         : sparse_sets{&_sparse_sets...}, smallest_size(-1) {
@@ -49,6 +75,9 @@ struct sparse_view {
 
         constexpr iterator begin() {return iterator(this, 0);}
         constexpr iterator end()   {return iterator(this, smallest_size);}
+
+        constexpr const_iterator begin() const {return const_iterator(this, 0);}
+        constexpr const_iterator end()   const {return const_iterator(this, smallest_size);}
 
     private:
         std::tuple<SparseSets*...> sparse_sets;
@@ -86,9 +115,24 @@ struct sparse_view {
         }
 
         constexpr reference value_from_dense(size_type dense_index) {
-            assert(dense_index < leading_dense->size() && "value_from_dense");
+            assert(dense_index < leading_dense->size());
             Entity entity = (*leading_dense)[dense_index];
+            return {(std::get<SparseSets*>(sparse_sets)->get(entity))...};
+        }
 
+        constexpr const_reference value_from_dense(size_type dense_index) const {
+            assert(dense_index < leading_dense->size());
+            Entity entity = (*leading_dense)[dense_index];
             return {(std::get<SparseSets*>(sparse_sets)->get(entity))...};
         }
 };
+
+
+// ToDo:
+// ### 3. Non-Standard Iterator Implementation
+// • Problem: The iterator and const_iterator structs:
+//     • Lack standard member types required by C++ iterator traits (like iterator_category, difference_type, value_type, pointer, and reference).
+//     • Lack the post-increment operator (operator++(int)).
+//     • Lack the equality operator (operator==).
+// • Impact: While it works inside a basic range-based for loop, it will fail to compile if used with standard library algorithms (like std::for_each or std::find_if) or C++20
+// ranges/concepts.
