@@ -16,7 +16,7 @@ struct sparse_view {
 
         static constexpr size_type type_count = sizeof...(SparseSets);
 
-        static_assert((type_count >= 2));
+        static_assert((type_count >= 1));
         static_assert((
             std::is_same_v<std::remove_const_t<SparseSets>,
             std::remove_const_t<sparse_set<typename SparseSets::value_type, SparseSets::page_size_power>>> && ...)

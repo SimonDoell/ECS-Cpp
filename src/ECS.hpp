@@ -22,6 +22,21 @@ struct ecs {
     public:
         ecs() {}
 
+        constexpr Entity create_entity() {
+            if (freed_entities.empty()) return current_entity++;
+            else {
+                Entity entity = freed_entities.back();
+                freed_entities.pop_back();
+                return entity;
+            }
+        }
+
+        constexpr void destroy_entity(Entity& entity) {
+            freed_entities.emplace_back(entity);
+            remove_all(entity);
+            entity = -1;
+        }
+
         template<typename T>
         constexpr bool insert(Entity entity, const T& value) {
             static_assert(is_component<T>());
@@ -32,6 +47,10 @@ struct ecs {
         constexpr bool remove(Entity entity) noexcept {
             static_assert(is_component<T>());
             return get<T>().remove(entity);
+        }
+
+        constexpr bool remove_all(Entity entity) noexcept {
+            return (get<Components>().remove(entity), ...);
         }
 
         template<typename T>
@@ -55,17 +74,19 @@ struct ecs {
         template<typename... Types>
         constexpr view_type<Types...> view() {
             static_assert(are_components<Types...>());
-            return view_type<Types...>(get<Components>()...);
+            return view_type<Types...>(get<Types>()...);
         }
 
         template<typename... Types>
         constexpr const const_view_type<Types...> view() const {
             static_assert(are_components<Types...>());
-            return const_view_type<Types...>(get<Components>()...);
+            return const_view_type<Types...>(get<Types>()...);
         }
 
     private:
         std::tuple<set_type<Components>...> sets;
+        std::vector<Entity> freed_entities;
+        Entity current_entity = 0;
 
         template<typename T>
         constexpr set_type<T>& get() {
