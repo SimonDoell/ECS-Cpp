@@ -2,7 +2,6 @@
 #include "SparseSet.hpp"
 #include "SparseView.hpp"
 
-
 template<typename... Components>
 struct ecs {
         using size_type = uint32_t;
@@ -71,6 +70,14 @@ struct ecs {
             return (get<Types>().contains(entity) && ...);
         }
 
+        template<typename... Inc, typename... Exc>
+        constexpr bool contains(Entity entity, Exclude<Exc...>) const noexcept {
+            static_assert(are_components<Inc...>());
+            static_assert(are_components<Exc...>());
+            static_assert((not_contained_by<Inc, Exc...>() && ...));
+            return (get<Inc>().contains(entity) && ...) && (!get<Exc>().contains(entity) && ...);
+        }
+        
         template<typename... Types>
         constexpr view_type<Types...> view() {
             static_assert(are_components<Types...>());
@@ -106,5 +113,10 @@ struct ecs {
         template<typename... Types>
         static consteval bool are_components() {
             return (is_component<Types>() && ...);
+        }
+
+        template<typename T, typename... Types>
+        static constexpr bool not_contained_by() {
+            return (!std::is_same_v<T, Types> && ...);
         }
 };
