@@ -11,12 +11,6 @@ struct ecs {
 
         template<typename T>
         using set_type = sparse_set<T, page_size>;
-        
-        template<typename... Types>
-        using view_type = sparse_view<set_type<Types>...>;
-
-        template<typename... Types>
-        using const_view_type = sparse_view<const set_type<Types>...>;
 
     public:
         ecs() {}
@@ -78,16 +72,26 @@ struct ecs {
             return (get<Inc>().contains(entity) && ...) && (!get<Exc>().contains(entity) && ...);
         }
         
-        template<typename... Types>
-        constexpr view_type<Types...> view() {
+        template<typename... Types, typename... Exc>
+        constexpr sparse_view<TypeList<sparse_set<Types, page_size>...>, TypeList<sparse_set<Exc, page_size>...>> view(Exclude<Exc...> _exclude = exclude<>) {
             static_assert(are_components<Types...>());
-            return view_type<Types...>(get<Types>()...);
+            static_assert(are_components<Exc  ...>());
+            if constexpr (sizeof...(Exc) >= 1) {
+                return sparse_view<TypeList<sparse_set<Types, page_size>...>, TypeList<sparse_set<Exc, page_size>...>>(get<Types>()..., get<Exc...>());
+            } else {
+                return sparse_view<TypeList<sparse_set<Types, page_size>...>, TypeList<sparse_set<Exc, page_size>...>>(get<Types>()...);
+            }
         }
 
-        template<typename... Types>
-        constexpr const const_view_type<Types...> view() const {
+        template<typename... Types, typename... Exc>
+        constexpr sparse_view<TypeList<const sparse_set<Types, page_size>...>, TypeList<const sparse_set<Exc, page_size>...>> view(Exclude<Exc...> _exclude = exclude<>) const {
             static_assert(are_components<Types...>());
-            return const_view_type<Types...>(get<Types>()...);
+            static_assert(are_components<Exc  ...>());
+            if constexpr (sizeof...(Exc) >= 1) {
+                return sparse_view<TypeList<const sparse_set<Types, page_size>...>, TypeList<const sparse_set<Exc, page_size>...>>(get<Types>()..., get<Exc...>());
+            } else {
+                return sparse_view<TypeList<const sparse_set<Types, page_size>...>, TypeList<const sparse_set<Exc, page_size>...>>(get<Types>()...);
+            }
         }
 
     private:
