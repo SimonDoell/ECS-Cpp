@@ -2,9 +2,8 @@
   {
     "label": "Debug binary",
     "build": {
-      "command": "make",
-      "args": ["-j4"],
-      "cwd": "$ZED_WORKTREE_ROOT/build/"
+      "command": "./scripts/build-debug.sh",
+      "cwd": "$ZED_WORKTREE_ROOT"
     },
     "program": "$ZED_WORKTREE_ROOT/build/Boilerplate",
     "request": "launch",
