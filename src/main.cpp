@@ -34,20 +34,18 @@ int main() {
     ecs.insert(player, Pos{});
     ecs.insert(player, Vel{});
     ecs.insert(player, Acc{});
-    ecs.insert(player, Health{});
-    ecs.insert(player, Weapon::None);
-    
+
     Entity enemyA = create_enemy(ecs);
     Entity enemyB = create_enemy(ecs);
-    Entity enemyC = create_enemy(ecs);
 
-
-    for (auto [pos, vel, acc] : ecs.view<Pos, Vel, Acc>()) {
-        vel.x += acc.x;
-        vel.y += acc.y;
-        pos.x += vel.x;
-        pos.y += vel.y;
+    for (auto [p, v, a] : ecs.view<Pos, Vel, Acc>(exclude<AI>)) {
+        std::cout << p.x << "\n";
+        std::cout << v.x << "\n";
+        std::cout << a.x << "\n";
+        std::cout << "\n";
     }
+
+    std::cout << ecs.get<Pos>(player).x << "\n";
     
     return 0;
 }
