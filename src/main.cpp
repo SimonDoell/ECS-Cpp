@@ -44,8 +44,6 @@ int main() {
         std::cout << a.x << "\n";
         std::cout << "\n";
     }
-
-    std::cout << ecs.get<Pos>(player).x << "\n";
     
     return 0;
 }
