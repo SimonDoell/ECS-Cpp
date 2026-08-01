@@ -46,9 +46,9 @@ struct sparse_view<TypeList<Inc...>, TypeList<Exc...>> {
         static constexpr size_type exclude_count = sizeof...(Exc);
 
         static_assert(include_count >= 1);
-        static_assert((is_unique_v<std::remove_const_t<Inc>..., std::remove_const_t<Exc>...>));
-        static_assert((std::is_same_v<std::remove_const_t<Inc>, sparse_set<typename Inc::value_type>> && ...));
-        static_assert((std::is_same_v<std::remove_const_t<Exc>, sparse_set<typename Exc::value_type>> && ...));
+        static_assert((is_unique_v<std::remove_cvref_t<Inc>..., std::remove_cvref_t<Exc>...>));
+        static_assert((std::is_same_v<std::remove_cvref_t<Inc>, sparse_set<typename Inc::value_type>> && ...));
+        static_assert((std::is_same_v<std::remove_cvref_t<Exc>, sparse_set<typename Exc::value_type>> && ...));
 
         struct iterator {
             public:

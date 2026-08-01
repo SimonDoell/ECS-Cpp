@@ -12,10 +12,12 @@ template<>
 struct entity_traits<uint32_t> {
     using size_type   = uint32_t;
     using entity_type = uint32_t;
+    static constexpr size_type   index_bits      = 22;
+    static constexpr size_type   generation_bits = 10;
     static constexpr entity_type index_mask      = 0b00000000'00111111'11111111'11111111;
-    static constexpr entity_type index_bits      = 22;
     static constexpr entity_type generation_mask = 0b11111111'11000000'00000000'00000000;
     static_assert(index_mask == ~generation_mask);
+    static_assert(index_bits + generation_bits == sizeof(entity_type) * 8);
 
     static constexpr size_type index_of(entity_type entity) {
         return entity & index_mask;
@@ -31,6 +33,14 @@ struct entity_traits<uint32_t> {
 
     static constexpr entity_type set_generation(entity_type entity, size_type generation) {
         return (entity & index_mask) | ((static_cast<entity_type>(generation) << index_bits) & generation_mask);
+    }
+
+    static constexpr entity_type increment_generation(entity_type entity) {
+        entity_type generation = generation_of(entity);
+        generation += 1;
+        generation = generation & ((static_cast<entity_type>(1) << generation_bits) - 1);
+        entity = set_generation(entity, generation);
+        return entity;
     }
 };
 
@@ -38,10 +48,12 @@ template<>
 struct entity_traits<uint64_t> {
     using size_type   = uint32_t;
     using entity_type = uint64_t;
-    static constexpr uint64_t index_mask      = 0b00000000'00000000'00000000'00000000'11111111'11111111'11111111'11111111;
-    static constexpr uint64_t index_bits      = 32;
-    static constexpr uint64_t generation_mask = 0b11111111'11111111'11111111'11111111'00000000'00000000'00000000'00000000;
+    static constexpr size_type   index_bits      = 32;
+    static constexpr size_type   generation_bits = 32;
+    static constexpr entity_type index_mask      = 0b00000000'00000000'00000000'00000000'11111111'11111111'11111111'11111111;
+    static constexpr entity_type generation_mask = 0b11111111'11111111'11111111'11111111'00000000'00000000'00000000'00000000;
     static_assert(index_mask == ~generation_mask);
+    static_assert(index_bits + generation_bits == sizeof(entity_type) * 8);
 
     static constexpr size_type index_of(entity_type entity) {
         return entity & index_mask;
@@ -57,6 +69,14 @@ struct entity_traits<uint64_t> {
 
     static constexpr entity_type set_generation(entity_type entity, size_type generation) {
         return (entity & index_mask) | ((static_cast<entity_type>(generation) << index_bits) & generation_mask);
+    }
+
+    static constexpr entity_type increment_generation(entity_type entity) {
+        entity_type generation = generation_of(entity);
+        generation += 1;
+        generation = generation & ((static_cast<entity_type>(1) << generation_bits) - 1);
+        entity = set_generation(entity, generation);
+        return entity;
     }
 };
 
