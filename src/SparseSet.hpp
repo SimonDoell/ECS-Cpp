@@ -10,8 +10,8 @@ struct sparse_set {
         using value_type = Tp;
         using reference  = Tp&;
         using pointer    = Tp*;
-        using const_reference  = const Tp&;
-        using const_pointer    = const Tp*;
+        using const_reference = const Tp&;
+        using const_pointer   = const Tp*;
 
         static constexpr size_type page_size_power = component_traits<Tp>::page_size_power;
         static constexpr size_type page_size       = 1 << page_size_power;
